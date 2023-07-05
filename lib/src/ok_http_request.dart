@@ -22,4 +22,13 @@ class OKHttpRequest extends Request {
       }
     }
   }
+
+  OKHttpRequest copyRequest() {
+    final copy = OKHttpRequest(method, url)
+      ..addHeaders(headers)
+      ..addBody(body)
+      ..followRedirects = followRedirects
+      ..persistentConnection = persistentConnection;
+    return copy;
+  }
 }

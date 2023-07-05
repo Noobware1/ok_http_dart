@@ -11,29 +11,40 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+A wrapper for dart http package for easier usage mainly for webscraping and personal use
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+webscraping tools
+json parsing using your custom fromJson method
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+create a OkHttpClient Instance
+
+```dart
+final OkHttpClient client = OkHttpClient();
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+
+now you can make requests using that instance
 
 ```dart
-const like = 'sample';
+
+void main(List<String> args) async {
+  final request =
+      await client.get('https://jsonplaceholder.typicode.com/posts', headers: {'User-Agent':
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0'});
+
+  print(request.text);
+  print(request.statusCode);
+  print(request.success);
+  print(request.json());
+}
 ```
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+TODO: ye
