@@ -12,6 +12,7 @@ and the Flutter guide for
 -->
 
 A wrapper for dart http package for easier usage mainly for webscraping and personal use
+A wrapper for dart http package for easier usage mainly for webscraping and personal use
 
 ## Features
 
