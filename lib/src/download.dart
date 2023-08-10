@@ -8,23 +8,27 @@ import 'package:ok_http_dart/ok_http_dart.dart';
 //Copied From Dio
 Future<OkHttpResponse> downloader({
   required http.Client client,
-  required String method,
-  required String url,
+  String? method,
+  String? url,
   required dynamic savePath,
   Duration? timeout,
   String? referer,
   void Function(int recevied, int total)? onReceiveProgress,
   Map<String, dynamic>? params,
-  bool deleteOnError = false,
+  bool deleteOnError = true,
   Map<String, String>? headers,
   Object? body,
   OKHttpRequest? request,
 }) async {
+  if (url == null && request == null) {
+    throw ArgumentError(
+        'The url for the request is null, pass a url to the download function or pass in a request object to fix the error');
+  }
   try {
     final req = request ??
         OKHttpRequest.builder(
-          method: method,
-          url: url,
+          method: method ?? 'GET',
+          url: url!,
           body: body,
           headers: headers,
           params: params,
@@ -39,7 +43,7 @@ Future<OkHttpResponse> downloader({
     RandomAccessFile raf = file.openSync(mode: FileMode.write);
 
     final completer = Completer<OkHttpResponse>();
-    // Future<OkHttpResponse> future = completer.future;
+    
     int received = 0;
 
     final stream = response.stream.asBroadcastStream();
@@ -117,7 +121,6 @@ Future<OkHttpResponse> downloader({
             'Download cloud not be completed in the give time limit');
       }
     }
-    if (completer.isCompleted) client.close();
 
     return future;
   } catch (_) {

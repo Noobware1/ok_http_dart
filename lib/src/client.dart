@@ -174,20 +174,26 @@ class OKHttpClient {
     return client.send(request);
   }
 
-  Future<OkHttpResponse> download(
-      {required String method,
-      required String url,
-      Duration? timeout,
-      required dynamic savePath,
-      bool deleteOnError = true,
-      String? referer,
-      Map<String, dynamic>? params,
-      Map<String, String>? headers,
-      Object? body}) {
-    return downloader(
-        client: createClient(),
+  Future<OkHttpResponse> download({
+    String? method,
+    String? url,
+    required dynamic savePath,
+    Duration? timeout,
+    String? referer,
+    void Function(int recevied, int total)? onReceiveProgress,
+    Map<String, dynamic>? params,
+    bool deleteOnError = true,
+    Map<String, String>? headers,
+    Object? body,
+    OKHttpRequest? request,
+  }) async {
+    final client = createClient();
+    final downloaded = await downloader(
+        client: client,
         method: method,
         url: url,
+        onReceiveProgress: onReceiveProgress,
+        request: request,
         params: params,
         referer: referer,
         savePath: savePath,
@@ -195,6 +201,8 @@ class OKHttpClient {
         deleteOnError: deleteOnError,
         headers: headers,
         timeout: timeout);
+    client.close();
+    return downloaded;
   }
 
   OkHttpClientSession session() => OkHttpClientSession(createClient());

@@ -10,7 +10,7 @@ http.Client _createClient(bool ignoreAllSSlError, bool retryRequest) {
   return client;
 }
 
-http.ClientException _noClientError(Uri url) =>
+http.ClientException _noClientError([Uri? url]) =>
     http.ClientException('HTTP request failed. Client is already closed.', url);
 
 class OkHttpClientSession {
@@ -171,23 +171,26 @@ class OkHttpClientSession {
     return _client!.send(request);
   }
 
-  Future<OkHttpResponse> download(
-      {required String method,
-      required String url,
-      Duration? timeout,
-      required dynamic savePath,
-      bool deleteOnError = true,
-      String? referer,
-      Map<String, String>? params,
-      Map<String, String>? headers,
-      Object? body}) {
-    if (_client == null) {
-      throw _noClientError(Uri.parse(url));
-    }
+  Future<OkHttpResponse> download({
+    String? method,
+    String? url,
+    required dynamic savePath,
+    Duration? timeout,
+    String? referer,
+    void Function(int recevied, int total)? onReceiveProgress,
+    Map<String, dynamic>? params,
+    bool deleteOnError = true,
+    Map<String, String>? headers,
+    Object? body,
+    OKHttpRequest? request,
+  }) {
+    if (_client == null) throw _noClientError();
     return downloader(
         client: _client!,
         method: method,
         url: url,
+        onReceiveProgress: onReceiveProgress,
+        request: request,
         params: params,
         referer: referer,
         savePath: savePath,
