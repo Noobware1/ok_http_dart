@@ -1,13 +1,19 @@
+import 'package:ok_http_dart/ok_http_dart.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/retry.dart';
-import 'package:ok_http_dart/src/download.dart';
-import 'package:ok_http_dart/src/insecure_client.dart';
-import 'package:ok_http_dart/src/session.dart';
-import 'ok_http_response.dart';
-import 'ok_http_request.dart';
+import 'package:ok_http_dart/retry.dart';
 
+http.Client _createClient(bool ignoreAllSSlError, bool retryRequest) {
+  final client = ignoreAllSSlError ? InsecureClient() : http.Client();
+  if (retryRequest) {
+    return RetryClient(client);
+  }
+  return client;
+}
 
-class OKHttpClient {
+http.ClientException _noClientError(Uri url) =>
+    http.ClientException('HTTP request failed. Client is already closed.', url);
+
+class OkHttpClientSession {
   bool _ignoreAllSSlError = false;
   bool _retryRequest = false;
 
@@ -16,19 +22,22 @@ class OKHttpClient {
 
   void retryRequest(bool retryRequest) => _retryRequest = retryRequest;
 
+  http.Client? _client;
+  OkHttpClientSession([http.Client? client]) {
+    _client = client ?? _createClient(_ignoreAllSSlError, _retryRequest);
+  }
+
   Future<OkHttpResponse> get(
     String url, {
     Map<String, String>? headers,
     bool? followRedircts,
     String? referer,
-    String? cookie,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
   }) {
     return request(
         url: url,
         method: 'GET',
         headers: headers,
-        cookie: cookie,
         params: params,
         referer: referer,
         followRedircts: followRedircts);
@@ -40,15 +49,13 @@ class OKHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
   }) {
     return request(
         url: url,
         method: 'POST',
-        cookie: cookie,
         headers: headers,
         body: body,
         params: params,
@@ -62,16 +69,14 @@ class OKHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
   }) {
     return request(
         url: url,
         method: 'PUT',
         headers: headers,
-        cookie: cookie,
         body: body,
         params: params,
         referer: referer,
@@ -83,17 +88,15 @@ class OKHttpClient {
   Future<OkHttpResponse> head(
     String url, {
     Map<String, String>? headers,
-    String? cookie,
     bool? followRedircts,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
   }) {
     return request(
         url: url,
         method: 'HEAD',
         headers: headers,
         params: params,
-        cookie: cookie,
         referer: referer,
         followRedircts: followRedircts);
   }
@@ -104,17 +107,15 @@ class OKHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
   }) {
     return request(
         url: url,
         method: 'PATCH',
         headers: headers,
         body: body,
-        cookie: cookie,
         params: params,
         referer: referer,
         followRedircts: followRedircts);
@@ -126,9 +127,8 @@ class OKHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
     bool? followRedircts,
   }) {
     return request(
@@ -136,7 +136,6 @@ class OKHttpClient {
         method: 'DELETE',
         headers: headers,
         body: body,
-        cookie: cookie,
         params: params,
         referer: referer,
         followRedircts: followRedircts);
@@ -147,31 +146,29 @@ class OKHttpClient {
     required String method,
     Map<String, String>? headers,
     bool? followRedircts,
-    String? cookie,
     String? referer,
-    Map<String, dynamic>? params,
+    Map<String, String>? params,
     Object? body,
   }) async {
-    final request = OKHttpRequest.builder(
+    final oKHttpRequest = OKHttpRequest.builder(
         method: method,
         url: url,
         body: body,
-        cookie: cookie,
         followRedirects: followRedircts,
         headers: headers,
         params: params,
         referer: referer);
+    final request = await send(oKHttpRequest);
+    final OkHttpResponse response = await OkHttpResponse.fromStream(request);
 
-    final client = createClient();
-    final stream = await send(client, request);
-    final response = await OkHttpResponse.fromStream(stream);
-    client.close();
     return response;
   }
 
-  Future<http.StreamedResponse> send(
-      http.Client client, OKHttpRequest request) {
-    return client.send(request);
+  Future<http.StreamedResponse> send(OKHttpRequest request) {
+    if (_client == null) {
+      throw _noClientError(request.url);
+    }
+    return _client!.send(request);
   }
 
   Future<OkHttpResponse> download(
@@ -181,11 +178,14 @@ class OKHttpClient {
       required dynamic savePath,
       bool deleteOnError = true,
       String? referer,
-      Map<String, dynamic>? params,
+      Map<String, String>? params,
       Map<String, String>? headers,
       Object? body}) {
+    if (_client == null) {
+      throw _noClientError(Uri.parse(url));
+    }
     return downloader(
-        client: createClient(),
+        client: _client!,
         method: method,
         url: url,
         params: params,
@@ -197,13 +197,10 @@ class OKHttpClient {
         timeout: timeout);
   }
 
-  OkHttpClientSession session() => OkHttpClientSession(createClient());
-
-  http.Client createClient() {
-    final client = _ignoreAllSSlError ? InsecureClient() : http.Client();
-    if (_retryRequest) {
-      return RetryClient(client);
+  void close() {
+    if (_client != null) {
+      _client!.close();
+      _client == null;
     }
-    return client;
   }
 }

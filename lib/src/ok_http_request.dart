@@ -1,4 +1,5 @@
 import 'package:http/http.dart';
+import 'utils.dart';
 
 class OKHttpRequest extends Request {
   OKHttpRequest(super.method, super.url);
@@ -23,12 +24,44 @@ class OKHttpRequest extends Request {
     }
   }
 
-  OKHttpRequest copyRequest() {
-    final copy = OKHttpRequest(method, url)
+  void addReferer(String? referer) {
+    if (referer != null &&
+        (headers['referer'] == null || headers['Referer'] == null)) {
+      headers['Referer'] = referer;
+    }
+  }
+
+  void addCookie(String? cookie) {
+    if (cookie != null) {
+      headers['Cookie'] = cookie;
+    }
+  }
+
+  factory OKHttpRequest.builder({
+    required String method,
+    required String url,
+    Map<String, String>? headers,
+    Map<String, dynamic>? params,
+    String? cookie,
+    Object? body,
+    String? referer,
+    bool? followRedirects,
+  }) {
+    final uri = addParams(url, params);
+    return OKHttpRequest(method, uri)
+      ..addBody(body)
+      ..addHeaders(headers)
+      ..addCookie(cookie)
+      ..addReferer(referer)
+      ..followRedirects = followRedirects ?? true;
+  }
+
+  OKHttpRequest cloneRequest() {
+    final clone = OKHttpRequest(method, url)
       ..addHeaders(headers)
       ..addBody(body)
       ..followRedirects = followRedirects
       ..persistentConnection = persistentConnection;
-    return copy;
+    return clone;
   }
 }

@@ -1,27 +1,39 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
-// import 'package:http/http.dart'
 import 'package:http/http.dart';
 
 class OkHttpResponse extends BaseResponse {
-  ///Get response bytes
-  final Uint8List bytes;
-//final a = http.Response
+  /// The bytes comprising the body of this response.
+  final Uint8List bodyBytes;
+
+  // CookieJar get cookies => _cookies;
+
+  // static const CookieJar _cookies = CookieJar([]);
+
+  String get cookie => headers['set-cookie'] ?? headers['cookie'] ?? '';
+
   ///Get the response as a html document
   Document get document => parse(text);
 
-  ///Get the encoding used for the response
-  String get encoding => encodingForHeaders(headers).name;
+  Encoding get encoding => encodingForHeaders(headers);
 
-  ///Get the the Reponse body as a String
-  String get text => encodingForHeaders(headers).decode(bytes);
+  /// The body of the response as a string.
+  ///
+  /// This is converted from [bodyBytes] using the `charset` parameter of the
+  /// `Content-Type` header field, if available. If it's unavailable or if the
+  /// encoding name is unknown, [latin1] is used by default, as per
+  /// [RFC 2616][].
+  ///
+  /// [RFC 2616]: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html
+  String get text => encodingForHeaders(headers).decode(bodyBytes);
 
   ///See if the request was succesfull with statuscode 200
   bool get success => statusCode == 200 ? true : false;
 
-  /// Creates a new OKHTTP response with a string body.
+  /// Creates a new HTTP response with a string body.
   OkHttpResponse(String body, int statusCode,
       {BaseRequest? request,
       Map<String, String> headers = const {},
@@ -35,17 +47,17 @@ class OkHttpResponse extends BaseResponse {
             persistentConnection: persistentConnection,
             reasonPhrase: reasonPhrase);
 
-  /// Create a new OKHTTP response with a byte array body.
-  OkHttpResponse.bytes(List<int> bytes, super.statusCode,
+  /// Create a new HTTP response with a byte array body.
+  OkHttpResponse.bytes(List<int> bodyBytes, super.statusCode,
       {super.request,
       super.headers,
       super.isRedirect,
       super.persistentConnection,
       super.reasonPhrase})
-      : bytes = Uint8List.fromList(bytes),
-        super(contentLength: bytes.length);
+      : bodyBytes = _toUint8List(bodyBytes),
+        super(contentLength: bodyBytes.length);
 
-  ///  Creates a new OKHTTP response by waiting for the full body to become
+  /// Creates a new HTTP response by waiting for the full body to become
   /// available from a [StreamedResponse].
   static Future<OkHttpResponse> fromStream(StreamedResponse response) async {
     final body = await response.stream.toBytes();
@@ -57,16 +69,61 @@ class OkHttpResponse extends BaseResponse {
         reasonPhrase: response.reasonPhrase);
   }
 
+  factory OkHttpResponse.fromResponse(Response response) {
+    return OkHttpResponse(response.body, response.statusCode,
+        headers: response.headers,
+        isRedirect: response.isRedirect,
+        persistentConnection: response.persistentConnection,
+        reasonPhrase: response.reasonPhrase,
+        request: response.request);
+  }
 
+  static Future<OkHttpResponse> fromBytes(
+      Stream<List<int>> stream, StreamedResponse response) async {
+    final body = await _toBytes(stream);
+    return OkHttpResponse.bytes(body, response.statusCode,
+        request: response.request,
+        headers: response.headers,
+        isRedirect: response.isRedirect,
+        persistentConnection: response.persistentConnection,
+        reasonPhrase: response.reasonPhrase);
+  }
 
   /// Get the Response as json or pass a fromJson method to parse it into a Dart Object
   T json<T>([T Function(dynamic json)? fromJson]) {
+    final json = jsonDecode(text);
+    if (fromJson != null) return fromJson.call(json);
+    return json;
+  }
+
+  /// Get the Response as json or pass a fromJson method to parse it into a Dart Object but returns null if an Error Occurs
+  T? jsonSafe<T>([T Function(dynamic json)? fromJson]) {
     try {
       final json = jsonDecode(text);
       if (fromJson != null) return fromJson.call(json);
       return json;
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      return null;
     }
   }
+}
+
+Uint8List _toUint8List(List<int> input) {
+  if (input is Uint8List) return input;
+  if (input is TypedData) {
+    // TODO(nweiz): remove "as" when issue 11080 is fixed.
+    return Uint8List.view((input as TypedData).buffer);
+  }
+  return Uint8List.fromList(input);
+}
+
+Future<Uint8List> _toBytes(Stream<List<int>> stream) {
+  var completer = Completer<Uint8List>();
+  var sink = ByteConversionSink.withCallback(
+      (bytes) => completer.complete(Uint8List.fromList(bytes)));
+  stream.listen(sink.add,
+      onError: completer.completeError,
+      onDone: sink.close,
+      cancelOnError: true);
+  return completer.future;
 }
