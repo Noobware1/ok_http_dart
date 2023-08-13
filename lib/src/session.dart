@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ok_http_dart/ok_http_dart.dart';
 import 'package:http/http.dart' as http;
 import 'package:ok_http_dart/retry.dart';
@@ -13,14 +15,31 @@ http.Client _createClient(bool ignoreAllSSlError, bool retryRequest) {
 http.ClientException _noClientError([Uri? url]) =>
     http.ClientException('HTTP request failed. Client is already closed.', url);
 
+http.ClientException _cannotCreateClient([Uri? url]) => http.ClientException(
+    'Cannot create new client if the previous client is already closed', url);
+
 class OkHttpClientSession {
   bool _ignoreAllSSlError = false;
   bool _retryRequest = false;
 
-  void ignoreAllSSLError(bool ignoreAllSSlError) =>
-      _ignoreAllSSlError = ignoreAllSSlError;
+  void ignoreAllSSLError(bool ignoreAllSSlError) {
+    _ignoreAllSSlError = ignoreAllSSlError;
 
-  void retryRequest(bool retryRequest) => _retryRequest = retryRequest;
+    if (_client != null) {
+      _client = _createClient(_ignoreAllSSlError, _retryRequest);
+    } else {
+      throw _cannotCreateClient();
+    }
+  }
+
+  void retryRequest(bool retryRequest) {
+    _retryRequest = retryRequest;
+    if (_client != null) {
+      _client = _createClient(_ignoreAllSSlError, _retryRequest);
+    } else {
+      throw _cannotCreateClient();
+    }
+  }
 
   http.Client? _client;
   OkHttpClientSession([http.Client? client]) {
@@ -158,10 +177,7 @@ class OkHttpClientSession {
         headers: headers,
         params: params,
         referer: referer);
-    final request = await send(oKHttpRequest);
-    final OkHttpResponse response = await OkHttpResponse.fromStream(request);
-
-    return response;
+    return OkHttpResponse.fromStream(await send(oKHttpRequest));
   }
 
   Future<http.StreamedResponse> send(OKHttpRequest request) {
@@ -185,6 +201,9 @@ class OkHttpClientSession {
     OKHttpRequest? request,
   }) {
     if (_client == null) throw _noClientError();
+
+    final file = File(savePath);
+
     return downloader(
         client: _client!,
         method: method,
@@ -193,7 +212,7 @@ class OkHttpClientSession {
         request: request,
         params: params,
         referer: referer,
-        savePath: savePath,
+        file: file,
         body: body,
         deleteOnError: deleteOnError,
         headers: headers,

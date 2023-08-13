@@ -10,7 +10,7 @@ Future<OkHttpResponse> downloader({
   required http.Client client,
   String? method,
   String? url,
-  required dynamic savePath,
+  required File file,
   Duration? timeout,
   String? referer,
   void Function(int recevied, int total)? onReceiveProgress,
@@ -36,14 +36,12 @@ Future<OkHttpResponse> downloader({
         );
     final response = await client.send(req);
 
-    final File file = File(savePath);
-
     file.createSync(recursive: true);
 
     RandomAccessFile raf = file.openSync(mode: FileMode.write);
 
     final completer = Completer<OkHttpResponse>();
-    
+
     int received = 0;
 
     final stream = response.stream.asBroadcastStream();
@@ -127,3 +125,4 @@ Future<OkHttpResponse> downloader({
     throw http.ClientException(_.toString());
   }
 }
+
