@@ -11,13 +11,16 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
-A wrapper for dart http package for easier usage mainly for webscraping and personal use
-A wrapper for dart http package for easier usage mainly for webscraping and personal use
+A wrapper for dart's http package.
+Mainly for easier and personal usage and to provide extra functionality to the package.
 
 ## Features
 
-webscraping tools
+webscraping like request and beautiful soup
 json parsing using your custom fromJson method
+download feature (copied from dio)
+easy to use
+
 
 ## Getting started
 
@@ -33,8 +36,6 @@ final OkHttpClient client = OkHttpClient();
 now you can make requests using that instance
 
 ```dart
-
-void main(List<String> args) async {
   final request =
       await client.get('https://jsonplaceholder.typicode.com/posts', headers: {'User-Agent':
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0'});
@@ -42,10 +43,8 @@ void main(List<String> args) async {
   print(request.text);
   print(request.statusCode);
   print(request.success);
-  print(request.json());
-}
 ```
 
 ## Additional information
 
-TODO: ye
+it still working progress bugs are excepted.
