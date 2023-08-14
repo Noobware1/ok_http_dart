@@ -207,6 +207,16 @@ class OKHttpClient {
     return downloaded;
   }
 
+  Future<OkHttpResponse> options(
+    OKHttpRequest request,
+  ) async {
+    final client = createClient();
+    final stream = await send(client, request);
+    final response = await OkHttpResponse.fromStream(stream);
+    client.close();
+    return response;
+  }
+
   OkHttpClientSession session() => OkHttpClientSession(createClient());
 
   http.Client createClient() {
