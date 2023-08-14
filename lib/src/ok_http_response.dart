@@ -79,8 +79,8 @@ class OkHttpResponse extends BaseResponse {
   }
 
   static Future<OkHttpResponse> fromBytes(
-      Stream<List<int>> stream, StreamedResponse response) async {
-    final body = await _toBytes(stream);
+      ByteStream stream, StreamedResponse response) async {
+    final body = await stream.toBytes();
     return OkHttpResponse.bytes(body, response.statusCode,
         request: response.request,
         headers: response.headers,

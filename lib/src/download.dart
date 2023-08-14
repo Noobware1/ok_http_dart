@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:ok_http_dart/http.dart';
 import 'package:ok_http_dart/ok_http_dart.dart';
 
 //Copied From Dio
@@ -41,10 +43,18 @@ Future<OkHttpResponse> downloader({
     RandomAccessFile raf = file.openSync(mode: FileMode.write);
 
     final completer = Completer<OkHttpResponse>();
+    var bytesCompleter = Completer<Uint8List>();
+
+    // final sink = <int>[];
+    var sink = ByteConversionSink.withCallback(
+        (bytes) => bytesCompleter.complete(Uint8List.fromList(bytes)));
+    // stream.listen(sink.add,
+    // );
+    // return completer.future;
 
     int received = 0;
 
-    final stream = response.stream.asBroadcastStream();
+    final stream = response.stream;
 
     final total =
         int.parse(response.headers['content-length']?.toString() ?? '-1');
@@ -65,11 +75,13 @@ Future<OkHttpResponse> downloader({
     late StreamSubscription subscription;
     // final Stopwatch watch = Stopwatch()..start();
 
-    subscription = stream.asyncMap((bytes) => Uint8List.fromList(bytes)).listen(
+    subscription = stream.listen(
       (data) {
+        sink.add(data);
+
         subscription.pause();
         // Write file asynchronously
-        asyncWrite = raf.writeFrom(data).then((result) {
+        asyncWrite = raf.writeFrom(Uint8List.fromList(data)).then((result) {
           // Notify progress
           received += data.length;
           onReceiveProgress?.call(received, total);
@@ -90,7 +102,15 @@ Future<OkHttpResponse> downloader({
           await asyncWrite;
           closed = true;
           await raf.close();
-          completer.complete(OkHttpResponse.fromBytes(stream, response));
+          sink.close();
+          // bytesCompleter.complete(Uint8List.fromList(sink));
+          completer.complete(OkHttpResponse.bytes(
+              await bytesCompleter.future, response.statusCode,
+              headers: response.headers,
+              isRedirect: response.isRedirect,
+              persistentConnection: response.persistentConnection,
+              reasonPhrase: response.reasonPhrase,
+              request: response.request));
         } catch (e) {
           completer.completeError(
             http.ClientException(e.toString(), req.url),
@@ -101,6 +121,7 @@ Future<OkHttpResponse> downloader({
         try {
           await closeAndDelete();
         } finally {
+          bytesCompleter.completeError(e);
           completer.completeError(
             http.ClientException(e.toString(), req.url),
           );

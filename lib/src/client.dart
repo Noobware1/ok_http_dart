@@ -5,6 +5,7 @@ import 'package:http/retry.dart';
 import 'package:ok_http_dart/src/download.dart';
 import 'package:ok_http_dart/src/insecure_client.dart';
 import 'package:ok_http_dart/src/session.dart';
+import 'package:ok_http_dart/src/stream_response.dart';
 import 'ok_http_response.dart';
 import 'ok_http_request.dart';
 
@@ -164,13 +165,13 @@ class OKHttpClient {
         referer: referer);
 
     final client = createClient();
-    final stream = await send(client, request);
+    final stream = await client.send(request);
     final response = await OkHttpResponse.fromStream(stream);
     client.close();
     return response;
   }
 
-  Future<http.StreamedResponse> send(
+   Future<http.StreamedResponse> send(
       http.Client client, OKHttpRequest request) {
     return client.send(request);
   }
