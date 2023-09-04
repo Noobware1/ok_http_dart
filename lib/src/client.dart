@@ -5,19 +5,13 @@ import 'package:http/retry.dart';
 import 'package:ok_http_dart/src/download.dart';
 import 'package:ok_http_dart/src/insecure_client.dart';
 import 'package:ok_http_dart/src/session.dart';
-import 'package:ok_http_dart/src/stream_response.dart';
 import 'ok_http_response.dart';
 import 'ok_http_request.dart';
 
 class OKHttpClient {
-  bool _ignoreAllSSlError = false;
-  bool _retryRequest = false;
 
-  void ignoreAllSSLError(bool ignoreAllSSlError) =>
-      _ignoreAllSSlError = ignoreAllSSlError;
 
-  void retryRequest(bool retryRequest) => _retryRequest = retryRequest;
-
+  
   Future<OkHttpResponse> get(
     String url, {
     Map<String, String>? headers,
@@ -25,6 +19,8 @@ class OKHttpClient {
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -46,6 +42,8 @@ class OKHttpClient {
     bool? followRedircts,
     String? referer,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -68,6 +66,8 @@ class OKHttpClient {
     bool? followRedircts,
     String? referer,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -89,6 +89,8 @@ class OKHttpClient {
     bool? followRedircts,
     String? referer,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -110,6 +112,8 @@ class OKHttpClient {
     bool? followRedircts,
     String? referer,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -132,6 +136,8 @@ class OKHttpClient {
     String? referer,
     Map<String, dynamic>? params,
     bool? followRedircts,
+    bool? verify,
+    bool? retry,
   }) {
     return request(
         url: url,
@@ -152,6 +158,8 @@ class OKHttpClient {
     String? cookie,
     String? referer,
     Map<String, dynamic>? params,
+    bool? verify,
+    bool? retry,
     Object? body,
   }) async {
     final request = OKHttpRequest.builder(
@@ -164,14 +172,14 @@ class OKHttpClient {
         params: params,
         referer: referer);
 
-    final client = createClient();
+    final client = createClient(verify ?? true, retry ?? false);
     final stream = await client.send(request);
     final response = await OkHttpResponse.fromStream(stream);
     client.close();
     return response;
   }
 
-   Future<http.StreamedResponse> send(
+  Future<http.StreamedResponse> send(
       http.Client client, OKHttpRequest request) {
     return client.send(request);
   }
@@ -220,9 +228,9 @@ class OKHttpClient {
 
   OkHttpClientSession session() => OkHttpClientSession(createClient());
 
-  http.Client createClient() {
-    final client = _ignoreAllSSlError ? InsecureClient() : http.Client();
-    if (_retryRequest) {
+  http.Client createClient([bool verify = true, bool retry = false]) {
+    final client = !verify ? InsecureClient() : http.Client();
+    if (retry) {
       return RetryClient(client);
     }
     return client;
