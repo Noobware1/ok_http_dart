@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:http_parser/http_parser.dart';
+
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
@@ -18,7 +21,7 @@ class OkHttpResponse extends BaseResponse {
   ///Get the response as a html document
   Document get document => parse(text);
 
-  Encoding get encoding => encodingForHeaders(headers);
+  Encoding get encoding => _encodingForHeaders(headers);
 
   /// The body of the response as a string.
   ///
@@ -28,7 +31,7 @@ class OkHttpResponse extends BaseResponse {
   /// [RFC 2616][].
   ///
   /// [RFC 2616]: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html
-  String get text => encodingForHeaders(headers).decode(bodyBytes);
+  String get text => _encodingForHeaders(headers).decode(bodyBytes);
 
   ///See if the request was succesfull with statuscode 200
   bool get success => statusCode == 200 ? true : false;
@@ -40,7 +43,7 @@ class OkHttpResponse extends BaseResponse {
       bool isRedirect = false,
       bool persistentConnection = true,
       String? reasonPhrase})
-      : this.bytes(encodingForHeaders(headers).encode(body), statusCode,
+      : this.bytes(_encodingForHeaders(headers).encode(body), statusCode,
             request: request,
             headers: headers,
             isRedirect: isRedirect,
@@ -117,13 +120,41 @@ Uint8List _toUint8List(List<int> input) {
   return Uint8List.fromList(input);
 }
 
-Future<Uint8List> _toBytes(Stream<List<int>> stream) {
-  var completer = Completer<Uint8List>();
-  var sink = ByteConversionSink.withCallback(
-      (bytes) => completer.complete(Uint8List.fromList(bytes)));
-  stream.listen(sink.add,
-      onError: completer.completeError,
-      onDone: sink.close,
-      cancelOnError: true);
-  return completer.future;
+/// Returns the encoding to use for a response with the given headers.
+///
+/// Defaults to [latin1] if the headers don't specify a charset or if that
+/// charset is unknown.
+Encoding _encodingForHeaders(Map<String, String> headers) =>
+    encodingForCharset(_contentTypeForHeaders(headers).parameters['charset']);
+
+/// Returns the [MediaType] object for the given headers's content-type.
+///
+/// Defaults to `application/octet-stream`.
+MediaType _contentTypeForHeaders(Map<String, String> headers) {
+  var contentType = headers['content-type'];
+  if (contentType != null) return MediaType.parse(contentType);
+  return MediaType('application', 'octet-stream');
 }
+
+/// Returns the [Encoding] that corresponds to [charset].
+///
+/// Returns [fallback] if [charset] is null or if no [Encoding] was found that
+/// corresponds to [charset].
+Encoding encodingForCharset(String? charset, [Encoding fallback = latin1]) {
+  if (charset == null) return fallback;
+  return Encoding.getByName(charset) ?? fallback;
+}
+
+
+// Future<Uint8List> _toBytes(Stream<List<int>> stream) {
+//   var completer = Completer<Uint8List>();
+//   var sink = ByteConversionSink.withCallback(
+//       (bytes) => completer.complete(Uint8List.fromList(bytes)));
+//   stream.listen(sink.add,
+//       onError: completer.completeError,
+//       onDone: sink.close,
+//       cancelOnError: true);
+//   return completer.future;
+// }
+
+

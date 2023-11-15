@@ -13,4 +13,5 @@ dev_dependencies:
   test: ^1.21.0
 dependencies:
   html: ^0.15.4
-  http: ^0.13.6
+  http: ^1.1.0
+  http_parser: ^4.0.2
