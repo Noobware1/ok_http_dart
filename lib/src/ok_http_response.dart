@@ -37,9 +37,6 @@ class OkHttpResponse extends BaseResponse {
   ///See if the request was succesfull with statuscode 200
   bool get success => statusCode == 200 ? true : false;
 
-  @override
-  OKHttpRequest? get request => super.request as OKHttpRequest?;
-
   /// Creates a new HTTP response with a string body.
   OkHttpResponse(String body, int statusCode,
       {OKHttpRequest? request,
