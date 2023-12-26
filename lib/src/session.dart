@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ok_http_dart/http.dart';
 import 'package:ok_http_dart/ok_http_dart.dart';
 import 'package:http/http.dart' as http;
 import 'package:ok_http_dart/retry.dart';

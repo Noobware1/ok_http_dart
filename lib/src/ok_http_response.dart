@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
+import 'package:ok_http_dart/src/ok_http_request.dart';
 
 class OkHttpResponse extends BaseResponse {
   /// The bytes comprising the body of this response.
@@ -36,9 +37,12 @@ class OkHttpResponse extends BaseResponse {
   ///See if the request was succesfull with statuscode 200
   bool get success => statusCode == 200 ? true : false;
 
+  @override
+  OKHttpRequest? get request => super.request as OKHttpRequest?;
+
   /// Creates a new HTTP response with a string body.
   OkHttpResponse(String body, int statusCode,
-      {BaseRequest? request,
+      {OKHttpRequest? request,
       Map<String, String> headers = const {},
       bool isRedirect = false,
       bool persistentConnection = true,
@@ -52,7 +56,7 @@ class OkHttpResponse extends BaseResponse {
 
   /// Create a new HTTP response with a byte array body.
   OkHttpResponse.bytes(List<int> bodyBytes, super.statusCode,
-      {super.request,
+      {BaseRequest? request,
       super.headers,
       super.isRedirect,
       super.persistentConnection,
@@ -72,14 +76,14 @@ class OkHttpResponse extends BaseResponse {
         reasonPhrase: response.reasonPhrase);
   }
 
-  factory OkHttpResponse.fromResponse(Response response) {
-    return OkHttpResponse(response.body, response.statusCode,
-        headers: response.headers,
-        isRedirect: response.isRedirect,
-        persistentConnection: response.persistentConnection,
-        reasonPhrase: response.reasonPhrase,
-        request: response.request);
-  }
+  // factory OkHttpResponse.fromResponse(Response response) {
+  //   return OkHttpResponse(response.body, response.statusCode,
+  //       headers: response.headers,
+  //       isRedirect: response.isRedirect,
+  //       persistentConnection: response.persistentConnection,
+  //       reasonPhrase: response.reasonPhrase,
+  //       request: response.request);
+  // }
 
   static Future<OkHttpResponse> fromBytes(
       ByteStream stream, StreamedResponse response) async {

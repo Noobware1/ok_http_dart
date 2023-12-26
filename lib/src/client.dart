@@ -8,9 +8,7 @@ import 'package:ok_http_dart/src/session.dart';
 import 'ok_http_response.dart';
 import 'ok_http_request.dart';
 
-class OKHttpClient {
-
-
+class OkHttpClient {
   
   Future<OkHttpResponse> get(
     String url, {

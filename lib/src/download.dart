@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:ok_http_dart/http.dart';
 import 'package:ok_http_dart/ok_http_dart.dart';
-
 //Copied From Dio
 Future<OkHttpResponse> downloader({
   required http.Client client,
