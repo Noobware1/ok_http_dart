@@ -16,7 +16,7 @@ class OkHttpClientSession {
   Future<OkHttpResponse> get(
     String url, {
     Map<String, String>? headers,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -28,7 +28,7 @@ class OkHttpClientSession {
         cookie: cookie,
         params: params,
         referer: referer,
-        followRedircts: followRedircts);
+        followRedirects: followRedirects);
   }
 
   ///makes a post request to the given url
@@ -37,7 +37,7 @@ class OkHttpClientSession {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -50,7 +50,7 @@ class OkHttpClientSession {
         body: body,
         params: params,
         referer: referer,
-        followRedircts: followRedircts);
+        followRedirects: followRedirects);
   }
 
   ///makes a put request to the given url
@@ -59,7 +59,7 @@ class OkHttpClientSession {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -72,7 +72,7 @@ class OkHttpClientSession {
         body: body,
         params: params,
         referer: referer,
-        followRedircts: followRedircts);
+        followRedirects: followRedirects);
   }
 
   ///makes a head request to the given url
@@ -80,7 +80,7 @@ class OkHttpClientSession {
   Future<OkHttpResponse> head(
     String url, {
     Map<String, String>? headers,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -92,7 +92,7 @@ class OkHttpClientSession {
         params: params,
         cookie: cookie,
         referer: referer,
-        followRedircts: followRedircts);
+        followRedirects: followRedirects);
   }
 
   ///makes a patch request to the given url
@@ -101,7 +101,7 @@ class OkHttpClientSession {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -114,7 +114,7 @@ class OkHttpClientSession {
         cookie: cookie,
         params: params,
         referer: referer,
-        followRedircts: followRedircts);
+        followRedirects: followRedirects);
   }
 
   ///makes a delete request to the given url
@@ -123,7 +123,7 @@ class OkHttpClientSession {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    bool? followRedircts,
+    bool? followRedirects,
     String? referer,
     String? cookie,
     Map<String, dynamic>? params,
@@ -136,7 +136,7 @@ class OkHttpClientSession {
       cookie: cookie,
       params: params,
       referer: referer,
-      followRedircts: followRedircts,
+      followRedirects: followRedirects,
     );
   }
 
@@ -153,7 +153,7 @@ class OkHttpClientSession {
     required String url,
     required String method,
     Map<String, String>? headers,
-    bool? followRedircts,
+    bool? followRedirects,
     String? cookie,
     String? referer,
     Map<String, dynamic>? params,
@@ -164,7 +164,7 @@ class OkHttpClientSession {
       url: url,
       body: body,
       cookie: cookie,
-      followRedirects: followRedircts,
+      followRedirects: followRedirects,
       headers: headers,
       params: params,
       referer: referer,
