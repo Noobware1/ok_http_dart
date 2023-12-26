@@ -4,6 +4,24 @@ import 'utils.dart';
 class OKHttpRequest extends Request {
   OKHttpRequest(super.method, super.url);
 
+  final bool _verify = false;
+  final bool _retry = false;
+
+  bool get verify => _verify;
+  bool get retry => _retry;
+
+  set verify(bool? verify) {
+    if (verify != null) {
+      verify = verify;
+    }
+  }
+
+  set retry(bool? retry) {
+    if (retry != null) {
+      retry = retry;
+    }
+  }
+
   ///add headers to the request
   void addHeaders(Map<String, String>? headers) {
     if (headers != null) this.headers.addAll(headers);
@@ -46,6 +64,8 @@ class OKHttpRequest extends Request {
     Object? body,
     String? referer,
     bool? followRedirects,
+    bool? verify,
+    bool? retry,
   }) {
     final uri = addParams(url, params);
     return OKHttpRequest(method, uri)
@@ -53,7 +73,9 @@ class OKHttpRequest extends Request {
       ..addHeaders(headers)
       ..addCookie(cookie)
       ..addReferer(referer)
-      ..followRedirects = followRedirects ?? true;
+      ..followRedirects = followRedirects ?? true
+      ..verify = verify
+      ..retry = retry;
   }
 
   OKHttpRequest cloneRequest() {

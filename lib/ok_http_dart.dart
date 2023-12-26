@@ -1,6 +1,7 @@
 library ok_http_dart;
 
 export 'src/client.dart';
+export 'src/session.dart';
 export 'src/ok_http_request.dart';
 export 'src/ok_http_response.dart';
 export 'src/extenstions.dart';

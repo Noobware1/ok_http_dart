@@ -9,7 +9,6 @@ import 'ok_http_response.dart';
 import 'ok_http_request.dart';
 
 class OkHttpClient {
-  
   Future<OkHttpResponse> get(
     String url, {
     Map<String, String>? headers,
@@ -20,7 +19,7 @@ class OkHttpClient {
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'GET',
         headers: headers,
@@ -36,14 +35,14 @@ class OkHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
+    String? cookie,
     Map<String, dynamic>? params,
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'POST',
         cookie: cookie,
@@ -60,14 +59,14 @@ class OkHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
+    String? cookie,
     Map<String, dynamic>? params,
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'PUT',
         headers: headers,
@@ -83,14 +82,14 @@ class OkHttpClient {
   Future<OkHttpResponse> head(
     String url, {
     Map<String, String>? headers,
-    String? cookie,
     bool? followRedircts,
     String? referer,
+    String? cookie,
     Map<String, dynamic>? params,
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'HEAD',
         headers: headers,
@@ -106,14 +105,14 @@ class OkHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
     bool? followRedircts,
     String? referer,
+    String? cookie,
     Map<String, dynamic>? params,
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'PATCH',
         headers: headers,
@@ -130,14 +129,14 @@ class OkHttpClient {
     String url, {
     Map<String, String>? headers,
     Object? body,
-    String? cookie,
-    String? referer,
-    Map<String, dynamic>? params,
     bool? followRedircts,
+    String? referer,
+    String? cookie,
+    Map<String, dynamic>? params,
     bool? verify,
     bool? retry,
   }) {
-    return request(
+    return _request(
         url: url,
         method: 'DELETE',
         headers: headers,
@@ -148,7 +147,15 @@ class OkHttpClient {
         followRedircts: followRedircts);
   }
 
-  Future<OkHttpResponse> request({
+  Future<OkHttpResponse> request(OKHttpRequest request) async {
+    final client = createClient(request.verify, request.retry);
+    final stream = await client.send(request);
+    final response = await OkHttpResponse.fromStream(stream);
+    client.close();
+    return response;
+  }
+
+  Future<OkHttpResponse> _request({
     required String url,
     required String method,
     Map<String, String>? headers,
@@ -161,20 +168,18 @@ class OkHttpClient {
     Object? body,
   }) async {
     final request = OKHttpRequest.builder(
-        method: method,
-        url: url,
-        body: body,
-        cookie: cookie,
-        followRedirects: followRedircts,
-        headers: headers,
-        params: params,
-        referer: referer);
-
-    final client = createClient(verify ?? true, retry ?? false);
-    final stream = await client.send(request);
-    final response = await OkHttpResponse.fromStream(stream);
-    client.close();
-    return response;
+      method: method,
+      url: url,
+      body: body,
+      cookie: cookie,
+      followRedirects: followRedircts,
+      headers: headers,
+      params: params,
+      referer: referer,
+      verify: verify,
+      retry: retry,
+    );
+    return this.request(request);
   }
 
   Future<http.StreamedResponse> send(
@@ -212,16 +217,6 @@ class OkHttpClient {
         timeout: timeout);
     client.close();
     return downloaded;
-  }
-
-  Future<OkHttpResponse> options(
-    OKHttpRequest request,
-  ) async {
-    final client = createClient();
-    final stream = await send(client, request);
-    final response = await OkHttpResponse.fromStream(stream);
-    client.close();
-    return response;
   }
 
   OkHttpClientSession session() => OkHttpClientSession(createClient());
